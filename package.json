@@ -1,0 +1,16 @@
+{
+  "name": "heart-of-god-prayer",
+  "version": "1.0.0",
+  "description": "Prayer request website for The Heart Of God Ministries",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.15"
+  }
+}

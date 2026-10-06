@@ -1,0 +1,96 @@
+:root{
+  --ink:#1D2340;      /* evening sky */
+  --ink-2:#2E3763;
+  --sky:#EEF2F7;      /* morning light */
+  --gold:#B8902F;     /* anointing oil */
+  --gold-d:#9A7622;
+  --heart:#8C2F45;    /* the heart */
+  --paper:#FFFFFF;
+  --muted:#5B6280;
+  --display:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --body:"Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{
+  font-family:var(--body);font-size:1.0625rem;line-height:1.6;color:var(--ink);background:var(--sky);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+
+/* ---------- Hero: night giving way to dawn ---------- */
+.hero{
+  color:#F4F1FA;text-align:center;
+  padding:calc(4.5rem + env(safe-area-inset-top,0px)) 0 7rem;
+  background:
+    radial-gradient(120% 70% at 50% 115%, rgba(232,196,120,.55) 0%, rgba(232,196,120,0) 60%),
+    linear-gradient(180deg,#141832 0%, var(--ink) 45%, #3A3F6B 100%);
+}
+.ministry{font-family:var(--body);font-weight:600;font-size:1rem;letter-spacing:.04em;color:#E8C478;margin-bottom:1.75rem}
+.verse{margin:0 auto 1.5rem;max-width:15em}
+.verse p{
+  font-family:var(--display);font-weight:500;font-style:italic;
+  font-size:clamp(2.1rem,7vw,4.25rem);line-height:1.08;margin:0 0 .75rem;
+  animation:dawn 1.6s ease-out both;
+}
+.verse cite{font-style:normal;font-family:var(--display);font-size:1.25rem;color:#E8C478}
+.hero-sub{max-width:32em;margin:0 auto 2rem;color:#CDD1E6;font-size:1.0625rem}
+@keyframes dawn{from{opacity:0;filter:blur(6px)}to{opacity:1;filter:blur(0)}}
+
+/* ---------- Buttons ---------- */
+.btn-gold{background:var(--gold);border:0;color:#fff;font-weight:600;border-radius:999px;padding-left:1.75rem;padding-right:1.75rem}
+.btn-gold:hover,.btn-gold:focus{background:var(--gold-d);color:#fff}
+.btn-gold:disabled{background:var(--gold);opacity:.7}
+.btn-heart{background:var(--heart);color:#fff;border:0;border-radius:999px;font-weight:600}
+.btn-heart:hover,.btn-heart:focus{background:#74243A;color:#fff}
+.btn-heart.recording{background:#C0392B;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.45)}50%{box-shadow:0 0 0 10px rgba(192,57,43,0)}}
+.btn-outline-ink{border:1.5px solid var(--ink);color:var(--ink);border-radius:999px;background:transparent}
+.btn-outline-ink:hover,.btn-outline-ink:focus{background:var(--ink);color:#fff}
+.btn-outline-ink.listening{background:var(--heart);border-color:var(--heart);color:#fff}
+.btn:focus-visible,.form-control:focus,.form-select:focus{outline:3px solid #E8C478;outline-offset:2px;box-shadow:none}
+
+/* ---------- Form card ---------- */
+.form-wrap{margin-top:-4.5rem;position:relative;z-index:1;padding-bottom:4rem}
+.prayer-card{
+  background:var(--paper);border-radius:1.25rem;padding:2rem 1.25rem;
+  box-shadow:0 20px 50px -24px rgba(29,35,64,.45);
+}
+@media (min-width:576px){.prayer-card{padding:2.5rem 2.25rem}}
+@media (min-width:992px){.prayer-card{padding:3rem 3.25rem}}
+.prayer-card h1{font-family:var(--display);font-weight:600;font-size:clamp(1.9rem,4.5vw,2.5rem);margin-bottom:.35rem}
+.lead-in{color:var(--muted);margin-bottom:1.75rem;max-width:36em}
+.prayer-card.text-center .lead-in{margin-left:auto;margin-right:auto}
+.form-label{font-weight:600}
+.opt{font-weight:400;color:var(--muted);font-size:.9rem}
+.form-control{border-color:#CCD2E0;border-radius:.75rem}
+.form-control-lg{font-size:1.1rem}
+textarea.form-control{font-size:1.05rem;line-height:1.55}
+#dictateLang{width:auto;border-radius:999px;border-color:#CCD2E0}
+.hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+
+.extras{border-top:1px solid #E3E7F0;padding-top:1.5rem}
+.extras legend{font-family:var(--display);font-size:1.4rem;font-weight:600;margin-bottom:1rem}
+.extra-row{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 1rem}
+.rec-time{font-variant-numeric:tabular-nums;font-weight:600;color:#C0392B}
+.file-tile{
+  display:flex;flex-direction:column;align-items:flex-start;gap:.15rem;cursor:pointer;width:100%;
+  border:1.5px dashed #B9C1D6;border-radius:.9rem;padding:1rem 1.1rem;background:#F8F9FC;min-height:100%;
+}
+.file-tile:hover{border-color:var(--gold);background:#FCFAF4}
+.file-tile .bi{font-size:1.5rem;color:var(--gold)}
+.file-title{font-weight:600}
+.file-name{font-size:.88rem;color:var(--muted);word-break:break-all}
+.file-tile.has-file{border-style:solid;border-color:var(--gold);background:#FCFAF4}
+input[type=file]:focus-visible + .img-preview, input[type=file]:focus-visible{outline:none}
+.img-preview{margin-top:.75rem;max-height:180px;max-width:100%;border-radius:.75rem;object-fit:cover}
+
+/* ---------- Success ---------- */
+.dove{font-size:3rem;line-height:1;margin-bottom:.75rem}
+.small-verse{font-family:var(--display);font-style:italic;font-size:1.3rem;max-width:24em;margin:0 auto}
+.small-verse span{display:block;font-style:normal;font-size:1rem;color:var(--gold-d);margin-top:.25rem}
+
+/* ---------- Footer: the calling ---------- */
+.calling{background:var(--ink);color:#DDE0EE;padding:4rem 0 calc(2.5rem + env(safe-area-inset-bottom,0px))}
+.call-verse{font-family:var(--display);font-style:italic;font-size:1.35rem;line-height:1.4;margin-bottom:.5rem}
+.call-ref{color:#E8C478;font-weight:600;margin:0}
+.copyright{text-align:center;margin:3rem 0 0;font-size:.9rem;color:#9AA0BE}
