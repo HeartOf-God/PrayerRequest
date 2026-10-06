@@ -65,23 +65,19 @@ const mailer = nodemailer.createTransport({
   port: Number(process.env.SMTP_PORT || 465),
   secure: String(process.env.SMTP_SECURE || "true") === "true",
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 20000,
 });
 
 const esc = (s = "") =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-async function sendEmail({ name, contact, message, files, when }) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS || !process.env.PRAYER_EMAIL_TO) {
-    throw new Error("Email is not configured");
-  }
-  const attachments = files.map((f) => ({ filename: f.originalname || f.fieldname, content: f.buffer, contentType: f.mimetype }));
+function buildEmail({ name, contact, message, files, when }) {
   const fileList = files.length
     ? files.map((f) => `<li>${esc(labelFor(f.fieldname))}: ${esc(f.originalname)} (${(f.size / 1024).toFixed(0)} KB)</li>`).join("")
     : "<li>None</li>";
-
-  await mailer.sendMail({
-    from: `"Prayer Requests" <${process.env.SMTP_USER}>`,
-    to: process.env.PRAYER_EMAIL_TO,
+  return {
     subject: `🙏 Prayer request from ${name}`,
     text: `Name: ${name}\nContact: ${contact || "-"}\nReceived: ${when}\n\nPrayer request:\n${message || "(no typed message — see attachments)"}\n\nAttachments: ${files.length}`,
     html: `
@@ -92,8 +88,40 @@ async function sendEmail({ name, contact, message, files, when }) {
         <div style="background:#f5f3ee;border-left:4px solid #b8902f;padding:12px 16px;white-space:pre-wrap">${esc(message || "(no typed message — see attachments)")}</div>
         <p><strong>Attachments:</strong></p><ul>${fileList}</ul>
       </div>`,
-    attachments,
+  };
+}
+
+// Email goes through Resend's web API when RESEND_API_KEY is set (works on Render's free plan,
+// which blocks SMTP ports). Otherwise it falls back to Gmail SMTP.
+async function sendEmail(payload) {
+  const to = process.env.PRAYER_EMAIL_TO;
+  if (!to) throw new Error("PRAYER_EMAIL_TO is not set");
+  const { subject, text, html } = buildEmail(payload);
+  const files = payload.files;
+
+  if (process.env.RESEND_API_KEY) {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM || "Prayer Requests <onboarding@resend.dev>",
+        to: [to],
+        subject, text, html,
+        attachments: files.map((f) => ({ filename: f.originalname || f.fieldname, content: f.buffer.toString("base64") })),
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!r.ok) throw new Error(`Resend error ${r.status}: ${await r.text()}`);
+    return "sent via Resend";
+  }
+
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) throw new Error("No email method configured (set RESEND_API_KEY)");
+  await mailer.sendMail({
+    from: `"Prayer Requests" <${process.env.SMTP_USER}>`,
+    to, subject, text, html,
+    attachments: files.map((f) => ({ filename: f.originalname || f.fieldname, content: f.buffer, contentType: f.mimetype })),
   });
+  return "sent via Gmail";
 }
 
 // ---------- WhatsApp ----------
@@ -113,11 +141,12 @@ async function sendWhatsApp({ name, contact, message, files }) {
   if (text.length > 1500) text = text.slice(0, 1450) + "…\n(full text in email)";
 
   if (provider === "callmebot") {
-    if (!process.env.CALLMEBOT_APIKEY) throw new Error("CALLMEBOT_APIKEY missing");
+    const key = process.env.CALLMEBOT_APIKEY;
+    if (!key || key === "pending") throw new Error("CALLMEBOT_APIKEY not set yet");
     const url =
       "https://api.callmebot.com/whatsapp.php?" +
-      new URLSearchParams({ phone: to, text, apikey: process.env.CALLMEBOT_APIKEY }).toString();
-    const r = await fetch(url);
+      new URLSearchParams({ phone: to, text, apikey: key }).toString();
+    const r = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!r.ok) throw new Error(`CallMeBot error ${r.status}`);
     return "sent";
   }
@@ -165,8 +194,7 @@ app.post("/api/prayer", limiter, (req, res) => {
     const payload = { name, contact, message, files, when };
 
     const [email, wa] = await Promise.allSettled([sendEmail(payload), sendWhatsApp(payload)]);
-    if (email.status === "rejected") console.error("Email failed:", email.reason?.message);
-    if (wa.status === "rejected") console.error("WhatsApp failed:", wa.reason?.message);
+    console.log(`Prayer request from "${name}" — email: ${email.status === "fulfilled" ? email.value : "FAILED: " + email.reason?.message} | whatsapp: ${wa.status === "fulfilled" ? wa.value : "FAILED: " + wa.reason?.message}`);
 
     if (email.status === "fulfilled" || (wa.status === "fulfilled" && wa.value === "sent")) {
       return res.json({ ok: true });
